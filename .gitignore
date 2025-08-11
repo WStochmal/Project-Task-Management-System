@@ -1,0 +1,22 @@
+# Node modules 
+/client/node_modules/
+/client/dist/
+/client/node_modules/.vite/
+
+# Logs frontend
+/client/npm-debug.log*
+/client/yarn-debug.log*
+/client/yarn-error.log*
+/client/pnpm-debug.log*
+
+# Backend Java
+/server/target/
+/server/out/
+/server/*.log
+/server/*.class
+/server/*.iml
+/server/.idea/
+
+# IDE 
+/.idea/
+/*.iml
