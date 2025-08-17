@@ -1,0 +1,16 @@
+.status {
+  width: 300px;
+  border-radius: 24px;
+  padding: 12px;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+}
+
+.status-tasks {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  height: 100%;
+  transition: 0.3s;
+}

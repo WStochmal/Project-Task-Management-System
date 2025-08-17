@@ -1,0 +1,95 @@
+.project-section {
+  width: 100%;
+  height: 100%;
+}
+
+.project-list {
+  margin-top: 50px;
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.project-item {
+  position: relative;
+  flex: 0 0 25%;
+  aspect-ratio: 1/1;
+  background: white;
+  border: 1px solid #ccc;
+  display: flex;
+  cursor: pointer;
+  transition: 0.3s ease-in-out;
+  overflow: hidden;
+  border-radius: 12px;
+}
+
+.project-item-content {
+  flex: 1;
+  padding: 12px;
+}
+
+/* PROJECT ACTIONS SECTION */
+
+.project-item-actions {
+  position: absolute;
+  height: 50%;
+  width: 100%;
+  background: #141416;
+  display: flex;
+  gap: 8px;
+  padding: 12px;
+  top: 100%;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  transition: 0.2s ease-in-out;
+}
+
+.project-item-actions button {
+  min-width: 48px;
+  min-height: 48px;
+  max-width: 48px;
+  max-height: 48px;
+  background: #fbfbfe;
+  border: none;
+  cursor: pointer;
+  padding: 12px;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.project-item-actions button svg {
+  width: 100%;
+  height: 100%;
+  color: #141416;
+}
+
+/* HOVER PROJECT ITEM */
+
+.project-item:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.project-item:hover .project-item-actions {
+  top: 50%;
+}
+
+/* BUTTONS HOVER */
+
+.project-item-actions button:hover svg {
+  color: #fbfbfe;
+}
+
+.project-item-actions button[data-action="delete"]:hover {
+  color: #fff;
+  background: #e74c3c;
+  transition: background 0.3s, color 0.3s;
+}
+
+.project-item-actions button[data-action="open"]:hover {
+  color: #fff;
+  background: #27ae60;
+  transition: background 0.3s, color 0.3s;
+}
