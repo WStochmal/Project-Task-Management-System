@@ -1,10 +1,10 @@
 import type { Task } from "./Task.type";
 
 export interface Status {
-  id: number;
+  id: string;
   name: string;
   color: string;
   sort: number;
-  projectId?: number;
+  projectId?: string;
   tasks: Task[];
 }

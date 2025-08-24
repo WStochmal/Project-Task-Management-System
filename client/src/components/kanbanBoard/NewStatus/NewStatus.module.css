@@ -1,0 +1,78 @@
+.new-status-column {
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(10px) saturate(150%);
+  -webkit-backdrop-filter: blur(10px) saturate(150%);
+  border-radius: 10px;
+  width: 280px;
+  min-width: 280px;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  cursor: pointer;
+  overflow: hidden;
+  margin-top: 20px;
+}
+
+.new-status-column h3 {
+  font-size: 18px;
+  font-weight: 400;
+  background: rgba(255, 255, 255, 0.75);
+  padding: 16px;
+  width: 100%;
+  user-select: none;
+}
+
+.new-status-column:hover {
+  transform: translateY(-2px) scale(1.01);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+}
+
+/* FORM */
+
+.new-status-form {
+  display: flex;
+  flex-direction: row;
+  padding: 10px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.new-status-form input {
+  flex: 1;
+  padding: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  color: #141418;
+  border: none;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.75);
+  font-size: 16px;
+}
+
+.new-status-form button {
+  flex: 0.5;
+  padding: 8px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+/* .new-status-form button[data-button-type="btn-close"] {
+  background: rgba(255, 0, 0, 0.35);
+  color: #b30000;
+}
+
+.new-status-form button[data-button-type="btn-close"]:hover {
+  background: rgba(255, 0, 0, 0.45);
+}
+
+.new-status-form button[data-button-type="btn-add"] {
+  background: rgba(0, 200, 0, 0.35);
+  color: #006600;
+}
+
+.new-status-form button[data-button-type="btn-add"]:hover {
+  background: rgba(0, 200, 0, 0.45);
+} */

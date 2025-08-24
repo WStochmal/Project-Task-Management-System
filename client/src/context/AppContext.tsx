@@ -6,7 +6,7 @@ import type { Task } from "../types/Task.type";
 
 interface AppContextProps {
   projects: Project[];
-  selectedProject: Project | null;
+  selectedProject: Project;
   loadingProjects: boolean;
   loadingProjectDetails: boolean;
   openProject: (id: number) => Promise<void>;

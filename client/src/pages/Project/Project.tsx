@@ -1,15 +1,9 @@
-// lib
 import React, { useEffect } from "react";
 import { useParams } from "react-router-dom";
-
-// context
 import { useAppContext } from "../../context/AppContext";
-
-// style
 import style from "./Project.module.css";
-
-// components
-import Status from "../../components/kanbanBoard/Status/Status";
+import StatusColumn from "../../components/kanbanBoard/Status/StatusColumn";
+import Board from "../../components/kanbanBoard/Board/Board";
 
 const Project = () => {
   const { loadSelectedProject, selectedProject, loadingProjectDetails } =
@@ -24,11 +18,7 @@ const Project = () => {
 
   return (
     <div className={style["project-section"]}>
-      <div className={style["project-kanban-board"]}>
-        {selectedProject?.statuses?.map((status) => (
-          <Status key={status.id} status={status} />
-        ))}
-      </div>
+      <Board project={selectedProject} />
     </div>
   );
 };

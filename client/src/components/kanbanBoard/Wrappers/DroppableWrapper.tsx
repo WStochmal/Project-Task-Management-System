@@ -1,60 +1,107 @@
-import { useState } from "react";
-import { useAppContext } from "../../../context/AppContext";
+import React, { useRef } from "react";
 
-type DroppableWrapperProps = {
-  droppableId: string;
-  children: (
-    placeholderIndex: number | null,
-    setPlaceholderIndex: (index: number | null) => void
-  ) => React.ReactNode;
-};
+interface Props {
+  statusId: number;
+  onTaskDrop: (taskId: number, statusId: number, index: number) => void;
+  children: React.ReactNode;
+}
 
-export const DroppableWrapper = ({
-  droppableId,
+const DroppableWrapper: React.FC<Props> = ({
+  statusId,
+  onTaskDrop,
   children,
-}: DroppableWrapperProps) => {
-  const { handleTaskDrop } = useAppContext();
-  const [placeholderIndex, setPlaceholderIndex] = useState<number | null>(null);
+}) => {
+  const placeholderRef = useRef<HTMLDivElement | null>(null);
 
-  const handleDrop = (e: React.DragEvent) => {
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
-    const draggedObjectId = e.dataTransfer.getData("draggedObjectId");
 
-    if (draggedObjectId) {
-      const draggedObjectType = draggedObjectId.split("-")[0];
-      if (draggedObjectType === "task") {
-        handleTaskDrop(draggedObjectId, droppableId, placeholderIndex);
-      }
+    const container = e.currentTarget;
+    const prevPositions = savePositions();
+
+    const afterElement = getDragAfterElement(container, e.clientY);
+    if (!placeholderRef.current) {
+      placeholderRef.current = document.createElement("div");
+      placeholderRef.current.className = "placeholder";
     }
 
-    setPlaceholderIndex(null);
-  };
-
-  const handleDragEnter = (e: React.DragEvent) => {
-    e.preventDefault();
-    // Ustawiamy placeholderIndex tylko, jeśli kursor wchodzi do kontenera
-    if (e.currentTarget.dataset.droppableId === droppableId) {
-      setPlaceholderIndex(0); // Domyślnie na początek listy
+    if (afterElement == null) {
+      container.appendChild(placeholderRef.current);
+    } else {
+      container.insertBefore(placeholderRef.current, afterElement);
     }
+
+    animateReorder(prevPositions);
   };
 
-  const handleDragLeave = (e: React.DragEvent) => {
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
-    // Resetujemy tylko, jeśli kursor opuszcza cały kontener
-    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
-      setPlaceholderIndex(null);
+    const taskId = Number(e.dataTransfer.getData("text/plain"));
+
+    if (placeholderRef.current) {
+      const index = Array.from(e.currentTarget.children).indexOf(
+        placeholderRef.current
+      );
+      onTaskDrop(taskId, statusId, index);
+      placeholderRef.current.remove();
+      placeholderRef.current = null;
     }
   };
 
   return (
-    <div
-      onDrop={handleDrop}
-      onDragOver={(e) => e.preventDefault()}
-      onDragEnter={handleDragEnter}
-      onDragLeave={handleDragLeave}
-      data-droppable-id={droppableId}
-    >
-      {children(placeholderIndex, setPlaceholderIndex)}
+    <div onDragOver={handleDragOver} onDrop={handleDrop}>
+      {children}
     </div>
   );
 };
+
+export default DroppableWrapper;
+
+// --- helpers ---
+function getDragAfterElement(container: HTMLElement, y: number) {
+  const draggableElements = [
+    ...container.querySelectorAll(".task:not(.dragging)"),
+  ];
+
+  return draggableElements.reduce(
+    (closest, child) => {
+      const box = child.getBoundingClientRect();
+      const offset = y - box.top - box.height / 2;
+      if (offset < 0 && offset > closest.offset) {
+        return { offset, element: child };
+      } else {
+        return closest;
+      }
+    },
+    { offset: Number.NEGATIVE_INFINITY, element: null as Element | null }
+  ).element;
+}
+
+function savePositions() {
+  const positions = new Map<Element, DOMRect>();
+  document.querySelectorAll(".task").forEach((el) => {
+    const rect = el.getBoundingClientRect();
+    positions.set(el, rect);
+  });
+  return positions;
+}
+
+function animateReorder(prevPositions: Map<Element, DOMRect>) {
+  document.querySelectorAll(".task").forEach((el) => {
+    const prev = prevPositions.get(el);
+    if (!prev) return;
+    const newBox = el.getBoundingClientRect();
+
+    const dx = prev.left - newBox.left;
+    const dy = prev.top - newBox.top;
+
+    if (dx || dy) {
+      (el as HTMLElement).style.transition = "none";
+      (el as HTMLElement).style.transform = `translate(${dx}px, ${dy}px)`;
+      requestAnimationFrame(() => {
+        (el as HTMLElement).style.transition = "transform 0.25s ease";
+        (el as HTMLElement).style.transform = "none";
+      });
+    }
+  });
+}

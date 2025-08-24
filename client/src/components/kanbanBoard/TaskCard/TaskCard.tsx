@@ -1,13 +1,28 @@
 import React from "react";
-import type { Task } from "../../../types/Task.type";
+import DraggableWrapper from "../Wrappers/DraggableWrapper";
 import style from "./TaskCard.module.css";
-import { DraggableWrapper } from "../Wrappers/DraggableWrapper";
+import type { Task } from "../../../types/Task.type";
 
-const TaskCard = ({ task }: { task: Task }) => {
+interface TaskCardProps {
+  task: Task;
+}
+
+const TaskCard = ({ task }: TaskCardProps) => {
+  // const handleDragStart = (e) => {
+  //   e.dataTransfer.setData("taskId", id);
+  //   if (onDragStart) {
+  //     onDragStart(id);
+  //   }
+  // };
+
   return (
-    <DraggableWrapper draggableId={"task-" + task.id}>
-      <div className={style["task-card"]}>{task.name}</div>
-    </DraggableWrapper>
+    <div
+      className={style["task-card"]}
+      draggable="true"
+      // onDragStart={handleDragStart}
+    >
+      {task.name}
+    </div>
   );
 };
 

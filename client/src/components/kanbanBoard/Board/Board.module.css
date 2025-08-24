@@ -1,0 +1,37 @@
+.boardContainer {
+  display: flex;
+  align-items: flex-start;
+  height: 100%;
+  padding: 20px;
+  overflow: visible;
+  overflow-x: scroll;
+}
+
+.board {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+  height: 100%;
+  padding: 20px;
+}
+
+.column-placeholder {
+  background: #d0ffd0;
+  border: 2px dashed #00aa00;
+  border-radius: 8px;
+  width: 250px;
+  min-height: 400px;
+}
+
+.dragging {
+  transform: rotate(2deg) scale(1.02);
+  opacity: 0.9;
+}
+
+.column-placeholder {
+  background: #d0ffd0;
+  border: 2px dashed #00aa00;
+  border-radius: 8px;
+  width: 300px;
+  min-height: 400px;
+}
