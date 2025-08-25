@@ -25,7 +25,7 @@ public class ProjectController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse> getProjectById(@PathVariable("id") Long id) {
+    public ResponseEntity<ApiResponse> getProjectById(@PathVariable("id") String id) {
         return projectService.getProjectById(id);
     }
 
@@ -35,7 +35,7 @@ public class ProjectController {
     }
 
     @DeleteMapping("/{id}")
-    public void deleteTask(@PathVariable Long id) {
+    public void deleteTask(@PathVariable String id) {
         projectRepository.deleteById(id);
     }
 

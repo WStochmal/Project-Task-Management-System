@@ -6,7 +6,7 @@ export const ProjectApi = {
     const response = await axiosClient.get("/project");
     return response.data;
   },
-  fetchProjectById: async (id: number): Promise<Project> => {
+  fetchProjectById: async (id: string): Promise<Project> => {
     const response = await axiosClient.get(`/project/${id}`);
     return response.data;
   },

@@ -5,7 +5,7 @@ public class CreateStatusDto {
     private String name;
     private String color;
     private short sortOrder;
-    private long projectId; // Id of the project
+    private String projectId; // Id of the project
     public String getName() {
         return name;
     }
@@ -27,14 +27,14 @@ public class CreateStatusDto {
     }
 
     public void setSortOrder(short order) {
-        this.sortOrder = sortOrder;
+        this.sortOrder = order;
     }
 
-    public long getProjectId() {
+    public String getProjectId() {
         return projectId;
     }
 
-    public void setProjectId(long projectId) {
+    public void setProjectId(String projectId) {
         this.projectId = projectId;
     }
 

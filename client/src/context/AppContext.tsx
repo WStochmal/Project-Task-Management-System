@@ -15,7 +15,7 @@ interface AppContextProps {
     targetId: string,
     placeholderIndex: number | null
   ) => void;
-  loadSelectedProject: (id: number) => Promise<void>;
+  loadSelectedProject: (id: string) => Promise<void>;
 }
 
 const AppContext = createContext<AppContextProps | undefined>(undefined);
@@ -42,10 +42,12 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   // Load a specific project by ID
-  const loadSelectedProject = async (id: number) => {
+  const loadSelectedProject = async (id: string) => {
     setLoadingProjectDetails(true);
+    console.log("Loading project with ID:", id);
     try {
       const data = await ProjectApi.fetchProjectById(id);
+      console.log("Loaded project:", data.data);
       setSelectedProject(data.data);
     } catch (error) {
       console.error(error);

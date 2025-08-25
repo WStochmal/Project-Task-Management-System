@@ -1,8 +1,10 @@
 package com.example.server.models;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import lombok.Data;
+import org.hibernate.annotations.GenericGenerator;
 
 import java.util.List;
 
@@ -10,11 +12,19 @@ import java.util.List;
 @Data
 public class Project {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long id;
+    @GeneratedValue(generator = "project-id")
+    @GenericGenerator(
+            name = "project-id",
+            strategy = "com.example.server.utils.CustomIdGenerator",
+            parameters = {
+                    @org.hibernate.annotations.Parameter(name = "prefix", value = "project")
+            }
+    )
+    private String id;
+
     private String name;
+
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
     private List<Status> statuses;
-
 }

@@ -159,14 +159,17 @@ const Board = ({ project }: BoardProps) => {
         onDragOver={handleDragOver}
         onDrop={handleDrop}
       >
-        {statuses.map((status) => (
-          <StatusColumn
-            key={status.id}
-            status={status}
-            onDragStart={(e) => handleDragStart(status, e)}
-            onDragEnd={handleDragEnd}
-          />
-        ))}
+        {statuses
+          .slice()
+          .sort((a, b) => a.sortOrder - b.sortOrder)
+          .map((status) => (
+            <StatusColumn
+              key={status.id}
+              status={status}
+              onDragStart={(e) => handleDragStart(status, e)}
+              onDragEnd={handleDragEnd}
+            />
+          ))}
       </div>
       <NewStatus handleNewStatus={createNewStatusColumn} />
     </div>

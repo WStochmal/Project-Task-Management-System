@@ -9,9 +9,8 @@ const Project = () => {
   const { loadSelectedProject, selectedProject, loadingProjectDetails } =
     useAppContext();
   const { id: projectId } = useParams();
-
   useEffect(() => {
-    loadSelectedProject(Number(projectId));
+    loadSelectedProject(projectId);
   }, [projectId]);
 
   if (loadingProjectDetails) return <div>Loading...</div>;

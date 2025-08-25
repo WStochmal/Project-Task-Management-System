@@ -3,7 +3,7 @@ package com.example.server.dto.task;
 public class CreateTaskDto {
     private String name;
     private short sortOrder;
-    private long statusId; // Id of the service
+    private String statusId; // Id of the service
 
     public String getName() {
         return name;
@@ -21,11 +21,11 @@ public class CreateTaskDto {
         this.sortOrder = sortOrder;
     }
 
-    public long getStatusId() {
+    public String getStatusId() {
         return statusId;
     }
 
-    public void setStatusId(long statusId) {
+    public void setStatusId(String statusId) {
         this.statusId = statusId;
     }
 }

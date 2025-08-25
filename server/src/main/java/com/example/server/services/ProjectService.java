@@ -43,7 +43,7 @@ public class ProjectService {
         }
     }
 
-    public ResponseEntity<ApiResponse> getProjectById (long id)
+    public ResponseEntity<ApiResponse> getProjectById (String id)
     {
         try {
             Project project = projectRepository.findById(id).orElse(null);
