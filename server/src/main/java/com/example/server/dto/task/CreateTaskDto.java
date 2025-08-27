@@ -3,7 +3,7 @@ package com.example.server.dto.task;
 public class CreateTaskDto {
     private String name;
     private short sortOrder;
-    private String statusId; // Id of the service
+    private String statusId;
 
     public String getName() {
         return name;

@@ -30,14 +30,12 @@ public class ProjectController {
     }
 
     @PostMapping
-    public Project createTask(@RequestBody Project project) {
-        return projectRepository.save(project);
+    public ResponseEntity<ApiResponse> createTask(@RequestBody Project project) {
+        return projectService.createProject(project);
     }
 
     @DeleteMapping("/{id}")
-    public void deleteTask(@PathVariable String id) {
-        projectRepository.deleteById(id);
+    public ResponseEntity<ApiResponse> deleteTask(@PathVariable String id) {
+        return projectService.deleteProjectById(id);
     }
-
-
 }

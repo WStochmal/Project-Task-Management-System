@@ -3,6 +3,9 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { ProjectApi } from "../api/projectApi";
 import type { Project } from "../types/Project.type";
 import type { Task } from "../types/Task.type";
+import { StatusApi } from "../api/statusApi";
+import type { Status } from "../types/Status.type";
+import { TaskApi } from "../api/taskApi";
 
 interface AppContextProps {
   projects: Project[];
@@ -16,6 +19,31 @@ interface AppContextProps {
     placeholderIndex: number | null
   ) => void;
   loadSelectedProject: (id: string) => Promise<void>;
+  deleteProject: (id: string) => Promise<void>;
+  createNewProject: (project: Partial<Project>) => Promise<void>;
+
+  createTask: (
+    statusId: string,
+    name: string,
+    sortOrder: number
+  ) => Promise<void>;
+  deleteTask: (id: string) => Promise<void>;
+  createStatus: (
+    projectId: string,
+    name: string,
+    color: string,
+    sortOrder: number
+  ) => Promise<void>;
+  deleteStatus: (id: string) => Promise<void>;
+  updateStatusOrder: (
+    statuses: Partial<Status>[],
+    projectId: string
+  ) => Promise<void>;
+  moveTask: (
+    taskId: string,
+    targetStatusId: string,
+    placeholderIndex: number | null
+  ) => Promise<void>;
 }
 
 const AppContext = createContext<AppContextProps | undefined>(undefined);
@@ -33,6 +61,8 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({
     setLoadingProjects(true);
     try {
       const data = await ProjectApi.fetchProjects();
+
+      console.log("Fetched projects:", data);
       setProjects(data.data);
     } catch (error) {
       console.error(error);
@@ -44,10 +74,8 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({
   // Load a specific project by ID
   const loadSelectedProject = async (id: string) => {
     setLoadingProjectDetails(true);
-    console.log("Loading project with ID:", id);
     try {
       const data = await ProjectApi.fetchProjectById(id);
-      console.log("Loaded project:", data.data);
       setSelectedProject(data.data);
     } catch (error) {
       console.error(error);
@@ -56,29 +84,163 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
-  // Handle task drop
-  const handleTaskDrop = (
+  // Delete a specific project by ID
+  const deleteProject = async (id: string) => {
+    try {
+      await ProjectApi.deleteProject(id);
+      setProjects((prev) => prev.filter((project) => project.id !== id));
+      if (selectedProject?.id === id) {
+        setSelectedProject(null);
+      }
+    } catch (error) {
+      console.error("Failed to delete project:", error);
+    }
+  };
+
+  // Create new project
+  const createNewProject = async (project: Partial<Project>) => {
+    try {
+      const response = await ProjectApi.createNewProject(project);
+      setProjects((prev) => [...prev, response.data]);
+    } catch (error) {
+      console.error("Failed to create project:", error);
+    }
+  };
+
+  // Create new task
+  const createTask = async (
+    statusId: string,
+    name: string,
+    sortOrder: number
+  ) => {
+    try {
+      const response = await TaskApi.createTask({
+        statusId,
+        name,
+        sortOrder,
+      });
+
+      const newTask = response.data;
+
+      setSelectedProject((prev) => {
+        if (!prev) return prev;
+
+        return {
+          ...prev,
+          statuses: prev.statuses.map((status) => {
+            if (status.id === statusId) {
+              return {
+                ...status,
+                tasks: [...status.tasks, newTask].sort(
+                  (a, b) => a.sortOrder - b.sortOrder
+                ),
+              };
+            }
+            return status;
+          }),
+        };
+      });
+    } catch (error) {
+      console.error("Failed to create task:", error);
+    }
+  };
+
+  // Create new status
+  const createStatus = async (
+    projectId: string,
+    name: string,
+    color: string,
+    sortOrder: number
+  ) => {
+    try {
+      const response = await StatusApi.createStatus({
+        projectId,
+        name,
+        color,
+        sortOrder,
+      });
+
+      console.log("Created status:", response);
+      setSelectedProject((prev) => {
+        if (!prev) return null;
+        return {
+          ...prev,
+          statuses: [...prev.statuses, response.data],
+        };
+      });
+    } catch (error) {
+      console.error("Failed to create status:", error);
+    }
+  };
+
+  // delete status
+  const deleteStatus = async (id: string) => {
+    try {
+      await StatusApi.deleteStatus(id);
+      setSelectedProject((prev) => {
+        if (!prev) return null;
+        return {
+          ...prev,
+          statuses: prev.statuses.filter((status) => status.id !== id),
+        };
+      });
+    } catch (error) {
+      console.error("Failed to delete status:", error);
+    }
+  };
+
+  // update statuses order
+  const updateStatusOrder = async (
+    statuses: Partial<Status>[],
+    projectId: string
+  ) => {
+    setSelectedProject((prev) => {
+      if (!prev) return null;
+      return {
+        ...prev,
+        statuses: statuses.map((status, index) => {
+          const existing = prev.statuses.find((s) => s.id === status.id);
+          return {
+            ...existing,
+            sortOrder: index,
+          };
+        }),
+      };
+    });
+
+    const statusOrders = statuses.map((s, index) => ({
+      id: s.id,
+      sortOrder: index,
+      projectId,
+    }));
+
+    try {
+      await StatusApi.updateStatusOrder(statusOrders);
+      console.log("Statuses reordered successfully on server");
+    } catch (error) {
+      console.error("Failed to update status order on server:", error);
+    }
+  };
+
+  // Handle task move (drop)
+  const moveTask = (
     taskId: string,
-    targetId: string,
+    targetStatusId: string,
     placeholderIndex: number | null
   ) => {
     if (!selectedProject) return;
 
-    console.log("Handling task drop:", {
-      taskId,
-      targetId,
-      placeholderIndex,
-    });
-
-    const taskIdNumber = parseInt(taskId.split("-")[1], 10);
-    const targetStatusId = parseInt(targetId.split("-")[1], 10);
-
     let movedTask: Task | null = null;
+    let sourceStatusId: string | null = null;
 
+    console.log(placeholderIndex);
+
+    // 1) Usuń task ze źródłowego statusu
     const updatedStatuses = selectedProject.statuses.map((status) => {
-      const remainingTasks = status.tasks.filter((task) => {
-        if (task.id === taskIdNumber) {
-          movedTask = task;
+      const remaining = status.tasks.filter((t) => {
+        if (t.id === taskId) {
+          movedTask = t;
+          sourceStatusId = status.id;
           return false;
         }
         return true;
@@ -86,47 +248,67 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({
 
       return {
         ...status,
-        tasks: remainingTasks.map((task, index) => ({
-          ...task,
-          sortOrder: index,
-        })),
+        tasks: remaining.map((t, i) => ({ ...t, sortOrder: i })),
       };
     });
 
+    if (!movedTask || !sourceStatusId) return;
+
+    // 2) policz docelową pozycję
+    const target = updatedStatuses.find((s) => s.id === targetStatusId);
+    if (!target) return;
+    const targetLen = target.tasks.length;
+    const insertIndex =
+      placeholderIndex == null || placeholderIndex > targetLen
+        ? targetLen
+        : Math.max(0, placeholderIndex);
+
+    // 3) wstaw taska do docelowego statusu
     const finalStatuses = updatedStatuses.map((status) => {
-      if (status.id === targetStatusId && movedTask) {
-        let newTasks: Task[];
-        if (
-          placeholderIndex === null ||
-          placeholderIndex >= status.tasks.length
-        ) {
-          newTasks = [
-            ...status.tasks,
-            { ...movedTask, sortOrder: status.tasks.length },
-          ];
-        } else {
-          newTasks = [
-            ...status.tasks.slice(0, placeholderIndex),
-            { ...movedTask, sortOrder: placeholderIndex },
-            ...status.tasks.slice(placeholderIndex),
-          ];
-        }
+      if (status.id !== targetStatusId) return status;
 
-        newTasks = newTasks.map((task, index) => ({
-          ...task,
-          sortOrder: index + 1,
-        }));
+      const newTasks = [
+        ...status.tasks.slice(0, insertIndex),
+        { ...movedTask!, sortOrder: insertIndex },
+        ...status.tasks.slice(insertIndex),
+      ].map((t, i) => ({ ...t, sortOrder: i }));
 
-        return { ...status, tasks: newTasks };
-      }
-      return status;
+      return { ...status, tasks: newTasks };
     });
 
-    setSelectedProject({
-      ...selectedProject,
-      statuses: finalStatuses,
+    // 4) Optimistic UI
+    setSelectedProject({ ...selectedProject, statuses: finalStatuses });
+
+    // 5) Call backend
+    TaskApi.moveTask({
+      taskId,
+      sourceStatusId,
+      targetStatusId,
+      targetSortOrder: insertIndex,
+    }).catch((err) => {
+      console.error("Failed to move task:", err);
+      // opcjonalnie rollback
     });
   };
+  // Delete task
+  const deleteTask = async (id: string) => {
+    try {
+      await TaskApi.deleteTask(id);
+      setSelectedProject((prev) => {
+        if (!prev) return null;
+        return {
+          ...prev,
+          statuses: prev.statuses.map((status) => ({
+            ...status,
+            tasks: status.tasks.filter((task) => task.id !== id),
+          })),
+        };
+      });
+    } catch (error) {
+      console.error("Failed to delete task:", error);
+    }
+  };
+
   useEffect(() => {
     loadProjects();
   }, []);
@@ -135,12 +317,19 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({
     <AppContext.Provider
       value={{
         projects,
+        createNewProject,
         selectedProject,
         loadingProjects,
         loadingProjectDetails,
         loadProjects,
         loadSelectedProject,
-        handleTaskDrop,
+        moveTask,
+        createTask,
+        deleteTask,
+        createStatus,
+        deleteStatus,
+        updateStatusOrder,
+        deleteProject,
       }}
     >
       {children}

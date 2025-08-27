@@ -3,12 +3,17 @@ package com.example.server.services;
 
 import com.example.server.dto.ApiResponse;
 import com.example.server.dto.status.CreateStatusDto;
+import com.example.server.dto.status.StatusOrderDto;
 import com.example.server.models.Project;
 import com.example.server.models.Status;
 import com.example.server.repository.ProjectRepository;
 import com.example.server.repository.StatusRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Service
 public class StatusService {
@@ -45,6 +50,45 @@ public class StatusService {
         } catch (Exception e) {
             ApiResponse errorResponse = new ApiResponse(false, "Error creating status: " + e.getMessage(),null);
             return ResponseEntity.status(500).body(errorResponse);
+        }
+    }
+
+
+    public ResponseEntity<ApiResponse> deleteStatus(String id) {
+        try {
+            Status status = statusRepository.findById(id).orElse(null);
+            if (status == null) {
+                ApiResponse response = new ApiResponse(false, "Status not found", null);
+                return ResponseEntity.ok().body(response);
+            }
+            statusRepository.delete(status);
+            ApiResponse response = new ApiResponse(true, "Status deleted successfully", null);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            ApiResponse response = new ApiResponse(false, "Failed to delete status: " + e.getMessage(), null);
+            return ResponseEntity.status(500).body(response);
+        }
+    }
+
+    public ResponseEntity<ApiResponse> updateStatusesOrder(List<StatusOrderDto> statusOrders) {
+        try {
+            for (StatusOrderDto dto : statusOrders) {
+                Status status = statusRepository.findById(dto.getId()).orElse(null);
+                if (status != null) {
+                    status.setSortOrder((short) dto.getSortOrder());
+                }
+            }
+            statusRepository.saveAll(
+                    statusOrders.stream()
+                            .map(dto -> statusRepository.findById(dto.getId()).orElse(null))
+                            .filter(Objects::nonNull)
+                            .collect(Collectors.toList())
+            );
+
+            return ResponseEntity.ok(new ApiResponse(true, "Statuses reordered successfully", null));
+        } catch (Exception e) {
+            return ResponseEntity.status(500)
+                    .body(new ApiResponse(false, "Failed to update statuses order: " + e.getMessage(), null));
         }
     }
 }

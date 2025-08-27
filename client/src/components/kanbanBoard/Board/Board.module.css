@@ -16,10 +16,11 @@
 }
 
 .column-placeholder {
-  background: #d0ffd0;
-  border: 2px dashed #00aa00;
+  /* background: #d0ffd0; */
+  background: rgba(255, 255, 255, 0.35);
+  border: 2px dashed #ccc;
   border-radius: 8px;
-  width: 250px;
+  width: 300px;
   min-height: 400px;
 }
 
@@ -28,10 +29,10 @@
   opacity: 0.9;
 }
 
-.column-placeholder {
-  background: #d0ffd0;
-  border: 2px dashed #00aa00;
-  border-radius: 8px;
-  width: 300px;
-  min-height: 400px;
+.task-placeholder {
+  background: rgba(255, 255, 255, 0.35);
+  height: 45px;
+  margin-bottom: 10px;
+  border: 2px dashed #ccc;
+  border-radius: 4px;
 }

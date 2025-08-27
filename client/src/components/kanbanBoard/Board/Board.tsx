@@ -11,15 +11,23 @@ import type { Project } from "../../../types/Project.type";
 // style
 import style from "./Board.module.css";
 import NewStatus from "../NewStatus/NewStatus";
+import { useAppContext } from "../../../context/AppContext";
 
 type BoardProps = {
   project: Project;
 };
 
 const Board = ({ project }: BoardProps) => {
-  const [statuses, setStatuses] = useState<Status[]>(project?.statuses || []);
+  const { createStatus, updateStatusOrder } = useAppContext();
+  const statuses = project?.statuses || [];
+  const draggedTask = useRef<Task | null>(null);
   const draggedStatus = useRef<Status | null>(null);
   const colPlaceholder = useRef<HTMLDivElement | null>(null);
+  const taskPlaceholder = useRef<HTMLDivElement | null>(null);
+  if (!taskPlaceholder.current) {
+    taskPlaceholder.current = document.createElement("div");
+    taskPlaceholder.current.className = style["task-placeholder"];
+  }
 
   if (!colPlaceholder.current) {
     colPlaceholder.current = document.createElement("div");
@@ -51,7 +59,7 @@ const Board = ({ project }: BoardProps) => {
     e.preventDefault();
 
     const board = e.currentTarget;
-    const prevPositions = savePositions(); // 🔹 zapisz pozycje przed zmianą
+    const prevPositions = savePositions();
 
     const afterElement = getDragAfterColumn(board, e.clientX);
     if (afterElement == null) {
@@ -87,7 +95,7 @@ const Board = ({ project }: BoardProps) => {
       }
     });
 
-    setStatuses(newOrder);
+    updateStatusOrder(newOrder, project.id);
     colPlaceholder.current?.remove();
     draggedStatus.current = null;
   };
@@ -143,13 +151,12 @@ const Board = ({ project }: BoardProps) => {
     });
   };
 
-  const createNewStatusColumn = (name: string) => {
-    const newStatus: Status = {
-      id: statuses.length + 1,
-      name: name,
-      tasks: [],
-    };
-    setStatuses((prev) => [...prev, newStatus]);
+  const createNewStatusColumn = (
+    name: string,
+    color: string,
+    sortOrder: number
+  ) => {
+    createStatus(project.id, name, color, sortOrder);
   };
 
   return (
@@ -160,7 +167,6 @@ const Board = ({ project }: BoardProps) => {
         onDrop={handleDrop}
       >
         {statuses
-          .slice()
           .sort((a, b) => a.sortOrder - b.sortOrder)
           .map((status) => (
             <StatusColumn
@@ -168,10 +174,15 @@ const Board = ({ project }: BoardProps) => {
               status={status}
               onDragStart={(e) => handleDragStart(status, e)}
               onDragEnd={handleDragEnd}
+              draggedTask={draggedTask}
+              taskPlaceholder={taskPlaceholder}
             />
           ))}
       </div>
-      <NewStatus handleNewStatus={createNewStatusColumn} />
+      <NewStatus
+        handleNewStatus={createNewStatusColumn}
+        order={statuses.length}
+      />
     </div>
   );
 };

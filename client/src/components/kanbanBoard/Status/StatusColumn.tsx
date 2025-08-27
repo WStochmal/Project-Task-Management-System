@@ -1,5 +1,5 @@
 // lib
-import React from "react";
+import React, { useState } from "react";
 
 // style
 import style from "./StatusColumn.module.css";
@@ -7,18 +7,135 @@ import style from "./StatusColumn.module.css";
 // type
 import type { Status } from "../../../types/Status.type";
 import TaskCard from "../TaskCard/TaskCard";
+import { useAppContext } from "../../../context/AppContext";
+import type { Task } from "../../../types/Task.type";
+import NewTask from "../NewTask/NewTask";
 
 interface StatusProps {
   onDragStart?: (e: React.DragEvent<HTMLDivElement>) => void;
   onDragEnd?: (e: React.DragEvent<HTMLDivElement>) => void;
   status: Status;
+  draggedTask: React.RefObject<Task>;
+  taskPlaceholder: React.RefObject<HTMLDivElement>;
 }
 
 const StatusColumn: React.FC<StatusProps> = ({
   status,
   onDragStart,
   onDragEnd,
+  draggedTask,
+  taskPlaceholder,
 }) => {
+  const { deleteStatus, createTask, moveTask } = useAppContext();
+  const [isFormVisible, setIsFormVisible] = useState(false);
+
+  const handleTaskDragStart = (
+    task: Task,
+    e: React.DragEvent<HTMLDivElement>
+  ) => {
+    draggedTask.current = task;
+    const target = e.currentTarget as HTMLDivElement;
+    target.classList.add(style.dragging);
+    setTimeout(() => (target.style.display = "none"), 0);
+  };
+
+  const handleTaskDragEnd = (e: React.DragEvent<HTMLDivElement>) => {
+    e.currentTarget.classList.remove(style.dragging);
+    e.currentTarget.style.display = "flex";
+    if (taskPlaceholder.current) taskPlaceholder.current.remove();
+    draggedTask.current = null;
+  };
+
+  const handleTaskDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    if (!draggedTask.current || !taskPlaceholder.current) return;
+
+    const container = e.currentTarget;
+
+    // usuń placeholder z poprzedniego kontenera
+    if (
+      taskPlaceholder.current.parentElement &&
+      taskPlaceholder.current.parentElement !== container
+    ) {
+      taskPlaceholder.current.parentElement.removeChild(
+        taskPlaceholder.current
+      );
+    }
+
+    const prevPositions = savePositions();
+
+    const afterElement = getTaskAfterElement(container, e.clientY);
+
+    if (afterElement == null) {
+      container.appendChild(taskPlaceholder.current);
+    } else {
+      container.insertBefore(taskPlaceholder.current, afterElement);
+    }
+
+    animateReorder(prevPositions);
+  };
+
+  function getTaskAfterElement(container: Element, y: number) {
+    const draggableTasks = [
+      ...container.querySelectorAll(
+        ".task:not(.dragging):not(.task-placeholder)"
+      ),
+    ];
+    return draggableTasks.reduce<{ offset: number; element: Element | null }>(
+      (closest, child) => {
+        const box = child.getBoundingClientRect();
+        const offset = y - box.top - box.height / 2;
+        if (offset < 0 && offset > closest.offset)
+          return { offset, element: child };
+        return closest;
+      },
+      { offset: Number.NEGATIVE_INFINITY, element: null }
+    ).element;
+  }
+
+  const savePositions = () => {
+    const positions = new Map<Element, DOMRect>();
+    document
+      .querySelectorAll(".task")
+      .forEach((el) => positions.set(el, el.getBoundingClientRect()));
+    return positions;
+  };
+
+  const animateReorder = (prevPositions: Map<Element, DOMRect>) => {
+    document.querySelectorAll(".task").forEach((el) => {
+      const prev = prevPositions.get(el);
+      if (!prev) return;
+      const newBox = el.getBoundingClientRect();
+      const dx = prev.left - newBox.left;
+      const dy = prev.top - newBox.top;
+      if (dx || dy) {
+        el.style.transition = "none";
+        el.style.transform = `translate(${dx}px, ${dy}px)`;
+        requestAnimationFrame(() => {
+          el.style.transition = "transform 0.25s ease";
+          el.style.transform = "none";
+        });
+      }
+    });
+  };
+
+  const handleNewTask = (taskName: string, sortOrder: number) => {
+    createTask(status.id, taskName, sortOrder);
+  };
+  const handleTaskDrop = (
+    e: React.DragEvent<HTMLDivElement>,
+    targetStatusId: string
+  ) => {
+    e.preventDefault();
+    if (!draggedTask.current || !taskPlaceholder.current) return;
+
+    const children = Array.from(e.currentTarget.children);
+    const placeholderIndex = children.indexOf(taskPlaceholder.current);
+    moveTask(draggedTask.current.id, targetStatusId, placeholderIndex);
+
+    taskPlaceholder.current.remove();
+  };
+
   return (
     <div
       id={status.id}
@@ -36,7 +153,7 @@ const StatusColumn: React.FC<StatusProps> = ({
           <h3>{status.name}</h3>
           <span>{status?.tasks.length} tasks</span>
           <span className={style["status-btns"]}>
-            <button>
+            <button onClick={() => setIsFormVisible(true)}>
               <svg
                 version="1.1"
                 xmlns="http://www.w3.org/2000/svg"
@@ -53,7 +170,7 @@ const StatusColumn: React.FC<StatusProps> = ({
                 </g>
               </svg>
             </button>
-            <button>
+            <button onClick={() => deleteStatus(status.id)}>
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24"
@@ -71,10 +188,27 @@ const StatusColumn: React.FC<StatusProps> = ({
           </span>
         </div>
       </div>
-      <div className={style["task-list"]}>
-        {status?.tasks.map((task) => (
-          <TaskCard key={task.id} task={task} />
-        ))}
+      <div
+        className={style["task-list"]}
+        onDragOver={(e) => handleTaskDragOver(e, status.id)}
+        onDrop={(e) => handleTaskDrop(e, status.id)}
+      >
+        {status.tasks
+          .sort((a, b) => a.sortOrder - b.sortOrder)
+          .map((task) => (
+            <TaskCard
+              key={task.id}
+              task={task}
+              onDragStart={(e) => handleTaskDragStart(task, e)}
+              onDragEnd={handleTaskDragEnd}
+            />
+          ))}
+        <NewTask
+          isFormVisible={isFormVisible}
+          setIsFormVisible={setIsFormVisible}
+          handleNewTask={handleNewTask}
+          order={status.tasks.length}
+        />
       </div>
     </div>
   );

@@ -1,22 +1,34 @@
-import React from "react";
-import { useAppContext } from "../../context/appContext";
-
-import style from "./Dashboard.module.css";
+// lib
+import React, { useRef } from "react";
 import { useNavigate } from "react-router-dom";
 
-const Dashboard = () => {
-  const { projects, loadingProjects } = useAppContext();
-  const navigate = useNavigate();
+// context hook
+import { useAppContext } from "../../context/appContext";
 
-  const handleButtonClick = (type: string, projectId: number) => {
+// style
+import style from "./Dashboard.module.css";
+
+// icons
+import icon_add from "@assets/icons/add.png";
+import icon_search from "@assets/icons/search.png";
+import { formatDate } from "../../utils/formatDate";
+
+const Dashboard = () => {
+  const { projects, loadingProjects, deleteProject, createNewProject } =
+    useAppContext();
+  const navigate = useNavigate();
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const handleButtonClick = (type: string, projectId?: string) => {
     switch (type) {
       case "open":
         navigate(`/projects/${projectId}`);
         break;
       case "delete":
-        // Handle deleting the project
+        deleteProject(projectId);
         break;
-      default:
+      case "create":
+        createNewProject({ name: "New Project" });
         break;
     }
   };
@@ -25,15 +37,36 @@ const Dashboard = () => {
 
   return (
     <div className={style["project-section"]}>
-      <h1>Projects</h1>
+      <div className={style["project-section-header"]}>
+        <img
+          src={icon_search}
+          alt="Search Projects"
+          className={style["project-search-icon"]}
+        />
+        <input
+          type="text"
+          placeholder="Search projects..."
+          className={style["project-search-input"]}
+          ref={inputRef}
+        />
+        <button onClick={() => handleButtonClick("create")}>
+          <img src={icon_add} alt="Add Project" />
+        </button>
+      </div>
+      <h2>Available Projects</h2>
+
       <div className={style["project-list"]}>
         {projects.map((project) => (
           <div key={project.id} className={style["project-item"]}>
-            <div className={style["project-item-content"]}>{project.name}</div>
+            <div className={style["project-item-content"]}>
+              <h3>{project.name}</h3>
+              <p>{formatDate(project.createdAt)}</p>
+            </div>
             <div className={style["project-item-actions"]}>
               <button
                 className={style["project-item-button"]}
                 data-action="delete"
+                onClick={() => handleButtonClick("delete", project.id)}
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"

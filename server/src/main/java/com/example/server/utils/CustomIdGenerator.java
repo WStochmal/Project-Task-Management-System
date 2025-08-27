@@ -8,6 +8,7 @@ import org.hibernate.type.Type;
 
 import java.io.Serializable;
 import java.util.Properties;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class CustomIdGenerator implements IdentifierGenerator, Configurable {
@@ -28,6 +29,6 @@ public class CustomIdGenerator implements IdentifierGenerator, Configurable {
     @Override
     public Serializable generate(SharedSessionContractImplementor session, Object object) {
         long id = counter.incrementAndGet();
-        return prefix + "-" + id;
+        return prefix + "-" + UUID.randomUUID();
     }
 }
